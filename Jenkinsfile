@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
-        ACR_NAME = "acrjenkinsdemo123"
+        ACR_LOGIN_SERVER = "acrjenkinsdemo123.azurecr.io"
         IMAGE_NAME = "java-demo"
         IMAGE_TAG = "v1"
-        ACR_LOGIN_SERVER = "acrjenkinsdemo123.azurecr.io"
     }
 
     stages {
@@ -25,27 +24,32 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                  docker build -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG .
+                  sudo docker build -t ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} .
                 '''
             }
         }
 
-        stage('Login to ACR') {
+        stage('Login to Azure Container Registry') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'acr-creds',
                     usernameVariable: 'ACR_USER',
                     passwordVariable: 'ACR_PASS'
                 )]) {
-                    sh 'docker login $ACR_LOGIN_SERVER -u $ACR_USER -p $ACR_PASS'
+                    sh '''
+                      sudo docker login ${ACR_LOGIN_SERVER} -u ${ACR_USER} -p ${ACR_PASS}
+                    '''
                 }
             }
         }
 
         stage('Push Image to ACR') {
             steps {
-                sh 'docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG'
+                sh '''
+                  sudo docker push ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}
+                '''
             }
         }
     }
 }
+
